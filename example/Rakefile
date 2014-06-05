@@ -1,0 +1,11 @@
+task :all => [:spec, :compile] do
+  p "run #{t.name}"
+end
+
+task :spec do
+  p "run #{t.name}"
+end
+
+task :compile do
+  p "run #{t.name}"
+end
