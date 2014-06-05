@@ -1,11 +1,13 @@
-task :all => [:spec, :compile] do
+task :default => [:all]
+
+task :all => [:spec, :compile] do |t|
   p "run #{t.name}"
 end
 
-task :spec do
+task :spec do |t|
   p "run #{t.name}"
 end
 
-task :compile do
+task :compile do |t|
   p "run #{t.name}"
 end

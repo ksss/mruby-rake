@@ -49,7 +49,7 @@ module Rake
 
     def enhance(d, &b)
       @prerequisites = d.map{|n| n.to_s}
-      @actions << b
+      @actions << b if b && b.kind_of?(Proc)
       self
     end
   end
