@@ -2,5 +2,5 @@
 
 raise NotImplementedError, "you must be install `Rake'" unless Object.const_defined?(:Rake)
 
-include Rake::DSL
+self.extend Rake::DSL
 Rake.application.run

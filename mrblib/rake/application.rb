@@ -16,6 +16,7 @@ module Rake
     rescue StandardError => e
       puts "rake aborted!"
       puts e
+      Dir.chdir(@original_dir)
     end
 
     def init
