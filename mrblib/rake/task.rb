@@ -1,29 +1,8 @@
 module Rake
   class Task
-    Tasks = {}
-    attr_accessor :prerequisites
-
     class << self
-      def [](task_name)
-        Tasks[task_name]
-      end
-
-      def define_task(args, &block)
-        name, deps = resolve_args(args)
-        t = Rake::Task.new(name)
-        t.enhance(deps, &block)
-        Tasks[name] = t
-        t
-      end
-
-      def resolve_args(args)
-        case args
-        when Hash
-          n = args.keys[0]
-          [n.to_s, args[n].flatten]
-        else
-          [args.to_s, []]
-        end
+      def define_task(*args, &block)
+        Rake.application.define_task(self, *args, &block)
       end
     end
 
@@ -31,7 +10,7 @@ module Rake
       @name = name
       @prerequisites = []
       @actions = []
-      @invoked = false
+      @already_invoked = false
     end
 
     def name
@@ -39,18 +18,34 @@ module Rake
     end
 
     def invoke
-      return if @invoked
-      @prerequisites.each do |d|
-        Task[d].invoke
+      return if @already_invoked
+      return unless needed?
+
+      @prerequisites.each do |p|
+        Rake.application.tasks[p].invoke
       end
       @actions.each do |b| b.call(self) end
-      @invoked = true
+      @already_invoked = true
     end
 
     def enhance(d, &b)
-      @prerequisites = d.map{|n| n.to_s}
-      @actions << b if b && b.kind_of?(Proc)
+      @prerequisites |= d if d
+      @actions << b if b
       self
+    end
+
+    def reenable
+      @already_invoked = false
+    end
+
+    def needed?
+      true
+    end
+  end
+
+  class FileTask < Task
+    def needed?
+      !File.exist?(name)
     end
   end
 end

@@ -1,31 +1,46 @@
 module Rake
   class Application
-    DEFAULT_RAKEFILES = %w[Rakefile]
+    attr_accessor :tasks
+
+    DEFAULT_RAKEFILES = %w[Rakefile rakefile Rakefile.rb rakefile.rb]
 
     def initialize
       @rakefiles = DEFAULT_RAKEFILES.dup
       @rakefile = nil
       @original_dir = Dir.pwd
-      @tasks = []
+      @tasks = {}
     end
 
     def run
       init
       load_rakefile
       top_level
-    rescue StandardError => e
-      puts "rake aborted!"
-      puts e
+    rescue Exception => e
+      puts "mrake aborted!"
+      p e
       Dir.chdir(@original_dir)
     end
 
     def init
-      if ARGV.size == 0
-        @tasks.push('default')
+    end
+
+    def define_task(task_klass, *args, &block)
+      name, deps = resolve_args(args)
+      t = task_klass.new(name)
+      @tasks[name] = t
+      deps = deps.map{|d| d.to_s}
+      t.enhance(deps, &block)
+      t
+    end
+
+    def resolve_args(args)
+      task_name = args.first
+      case task_name
+      when Hash
+        n = task_name.keys[0]
+        [n.to_s, task_name[n].flatten]
       else
-        ARGV.each do |arg|
-          @tasks.push arg
-        end
+        [task_name.to_s, []]
       end
     end
 
@@ -33,16 +48,14 @@ module Rake
       rakefile, location = find_rakefile
       fail "No Rakefile found (looking for: #{@rakefiles.join(', ')})" if rakefile.nil?
       @rakefile = rakefile
+      print_load_file File.expand_path(@rakefile) if location != @original_dir
       Dir.chdir(location)
-      print_load_file File.expand_path(@rakefile)
       load(File.expand_path(@rakefile)) if @rakefile && @rakefile != ''
     end
 
     def top_level
-      if Rake::Task::Tasks.has_key?('default')
-        @tasks.each do |task_name|
-          Rake::Task::Tasks[task_name].invoke
-        end
+      if Rake.application.tasks.has_key?('default')
+        @tasks['default'].invoke
       else
         fail "Don't know how to build task 'default'"
       end
@@ -66,11 +79,11 @@ module Rake
           return fn
         end
       end
-      return nil
+      nil
     end
 
     def print_load_file(filename)
-      puts "load Rakefile: #{filename}"
+      puts "(in : #{filename})"
     end
   end
 end
