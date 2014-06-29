@@ -30,19 +30,13 @@ assert 'Rake::DSL#file' do
 
       define_method(:run) {
         t1 = file('tmp' => ['old']){|t|
-          File.open(t.name, 'w') {
-            runlist << t.name
-          }
+          File.open(t.name, 'w') { runlist << t.name }
         }
-        file('old'){|t|
-          File.open(t.name, 'w') {
-            runlist << t.name
-          }
+        file('old' => ['build_config.rb']){|t|
+          File.open(t.name, 'w') { runlist << t.name }
         }
-        file('build_config.rb'){|t|
-          # never run
-          runlist << t.name
-        }
+        # never run
+        file('build_config.rb'){|t| runlist << t.name }
         t1.invoke
       }
     }.new.run
