@@ -22,6 +22,7 @@ module Rake
     end
 
     def init
+      @argv = ARGV.dup
     end
 
     def define_task(task_klass, *args, &block)
